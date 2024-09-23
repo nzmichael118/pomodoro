@@ -1,5 +1,6 @@
 use std::{io::self, io::Write, thread, time::Duration};
 use clap::Parser;
+use notify_rust::Notification;
 
 #[derive(Parser)]
 struct Args {
@@ -40,12 +41,18 @@ fn main() {
 
 fn run_timer(minutes: u64, label: &str) {
     let total_seconds = minutes * 60;
-    for remaining_seconds in (1..=total_seconds).rev() {
+    for remaining_seconds in (0..=total_seconds - 1).rev() {
         let minutes_left = remaining_seconds / 60;
         let seconds_left = remaining_seconds % 60;
-        print!("\r {}: {:02}:{:02} remaining", label, minutes_left, seconds_left);
+        print!("\r{}: {:02}:{:02} remaining", label, minutes_left, seconds_left);
         io::stdout().flush().unwrap(); // Actually print
         thread::sleep(Duration::from_secs(1));
     }
     println!();
+    let _ = Notification::new()
+    .summary("POMODORO")
+    .body(&format!("{} finished!", label))
+    .icon("dialog-information")
+    .timeout(0)
+    .show();
 }
