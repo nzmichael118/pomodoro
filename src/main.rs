@@ -50,7 +50,7 @@ fn run_timer(minutes: u64, label: &str) {
     }
     println!();
     let _ = Notification::new()
-    .summary("POMODORO")
+    .summary("POMODORO: TIMER FINISHED")
     .body(&format!("{} finished!", label))
     .icon("dialog-information")
     .timeout(0)
