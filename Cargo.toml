@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+eframe = "0.29.0"
 egui = "0.29.0"
 notify-rust = "4"

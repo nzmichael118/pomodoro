@@ -1,7 +1,8 @@
 use clap::Parser;
 use eframe::egui;
 use notify_rust::Notification;
-use std::{io, io::Write, thread, time::Duration, time::Instant};
+use std::{time::Duration, time::Instant};
+
 
 #[derive(Parser)]
 struct Args {
@@ -23,25 +24,30 @@ struct Args {
 }
 
 fn main() -> Result<(), eframe::Error> {
-    let args = Args::parse();
+    let options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "Pomodoro Timer",
+        options,
+        Box::new(|_cc| Ok(Box::new(PomodoroApp::new()))),  // Updated line
+    )
 }
 
 // Application states
 struct PomodoroApp {
     timing: Args,
-    session: str,
-    seconds: u32,
+    session: String,
+    seconds: u64,
     running: bool,
     last_tick: Instant,
     state_index: u32,
 }
 
 impl PomodoroApp {
-    fn new(self: _, args: Args) -> Self {
+    fn new() -> Self {
         Self {
-            timing: args,
-            session: "Work",
-            seconds: args.work,
+            timing: Args::parse(),
+            session: "Work".to_string(),
+            seconds: Args::parse().work * 60,
             running: false,
             last_tick: Instant::now(),
             state_index: 0,
@@ -59,28 +65,28 @@ impl PomodoroApp {
         self.stop_timer();
 
         self.state_index += 1;
-        if (self.state_index >= self.timing.sessions * 2) {
+        if self.state_index >= self.timing.sessions * 2 {
             // All sessions finished
-            self.session = "Finished, Good Job!";
+            self.session = "Finished, Good Job!".to_string();
             self.seconds = 0;
-        } else if (self.state_index % 2 == 1) {
+        } else if self.state_index % 2 == 1 {
             // break
-            if (self.state_index + 1 == self.timing.sessions * 2) {
+            if self.state_index + 1 == self.timing.sessions * 2 {
                 // Long break
-                self.session = "Long break";
+                self.session = "Long break".to_string();
                 self.seconds = self.timing.long_break * 60;
             } else {
                 // Short break
-                self.session = "Short Break";
+                self.session = "Short Break".to_string();
                 self.seconds = self.timing.break_time * 60;
             }
         } else {
             // work time
-            self.session = "Work";
+            self.session = "Work".to_string();
             self.seconds = self.timing.work * 60;
         }
     }
-    fn notify(self) {
+    fn notify(&self) {
         let _ = Notification::new()
             .summary("Pomodoro: Timer Finished")
             .body(&format!("{} finished!", self.session))
@@ -90,23 +96,42 @@ impl PomodoroApp {
     }
 }
 
-/*
-fn run_timer(minutes: u64, label: &str) {
-    let total_seconds = minutes * 60;
-    for remaining_seconds in (0..=total_seconds - 1).rev() {
-        let minutes_left = remaining_seconds / 60;
-        let seconds_left = remaining_seconds % 60;
-        print!("\r{}: {:02}:{:02} remaining", label, minutes_left, seconds_left);
-        io::stdout().flush().unwrap(); // Actually print
-        thread::sleep(Duration::from_secs(1));
-    }
-    println!();
-    let _ = Notification::new()
-    .summary("Pomodoro: Timer Finished")
-    .body(&format!("{} finished!", label))
-    .icon("dialog-information")
-    .timeout(0)
-    .show();
+impl eframe::App for PomodoroApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+
+            ui.heading(format!("Pomodoro {} Timer", self.session));
+            ui.label(format!("Time remaining: {:02}:{:02}", self.seconds / 60, self.seconds % 60));
+
+        if self.running { // Replace button with start or stop label
+            if ui.button("Stop").clicked() {
+                self.stop_timer();
+            }
+        } else {
+            if ui.button("Start").clicked() {
+                self.start_timer();
+            }
+        }
+        if ui.button("Skip Session").clicked() {
+            self.next_timer();
+        }
+
+
+        if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
+            self.seconds -= 1;
+            self.last_tick = Instant::now();
+        }
+
+        if self.seconds <= 0 {
+            self.next_timer();
+            self.notify();
+        }
+
+    });
+    ctx.request_repaint();
+
+    }
 }
-*/
+
