@@ -121,14 +121,16 @@ impl eframe::App for PomodoroApp {
                 }
             });
 
-            if self.seconds <= 0 {
-                self.next_timer();
-                self.notify();
-            }
+
 
             if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
                 self.seconds -= 1;
                 self.last_tick = Instant::now();
+            }
+
+            if self.seconds <= 0 {
+                self.next_timer();
+                self.notify();
             }
         });
         ctx.request_repaint();
