@@ -3,7 +3,6 @@ use eframe::egui;
 use notify_rust::Notification;
 use std::{time::Duration, time::Instant};
 
-
 #[derive(Parser)]
 struct Args {
     /// Work duration in minutes (default: 25)
@@ -28,7 +27,7 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Pomodoro Timer",
         options,
-        Box::new(|_cc| Ok(Box::new(PomodoroApp::new()))),  // Updated line
+        Box::new(|_cc| Ok(Box::new(PomodoroApp::new()))), // Updated line
     )
 }
 
@@ -98,44 +97,40 @@ impl PomodoroApp {
 
 impl eframe::App for PomodoroApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-
-
         egui::CentralPanel::default().show(ctx, |ui| {
-
             ui.heading(format!("Pomodoro {} Timer", self.session));
-            ui.label(format!("Time remaining: {:02}:{:02}", self.seconds / 60, self.seconds % 60));
+            ui.label(format!(
+                "Time remaining: {:02}:{:02}",
+                self.seconds / 60,
+                self.seconds % 60
+            ));
 
+            ui.horizontal(|ui| {
+                if self.running {
+                    // Replace button with start or stop label
+                    if ui.button("Stop").clicked() {
+                        self.stop_timer();
+                    }
+                } else {
+                    if ui.button("Start").clicked() {
+                        self.start_timer();
+                    }
+                }
+                if ui.button("Skip Session").clicked() {
+                    self.next_timer();
+                }
+            });
 
-        ui.horizontal(|ui| {
-        if self.running { // Replace button with start or stop label
-            if ui.button("Stop").clicked() {
-                self.stop_timer();
+            if self.seconds <= 0 {
+                self.next_timer();
+                self.notify();
             }
-        } else {
-            if ui.button("Start").clicked() {
-                self.start_timer();
+
+            if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
+                self.seconds -= 1;
+                self.last_tick = Instant::now();
             }
-        }
-        if ui.button("Skip Session").clicked() {
-            self.next_timer();
-        }
-    });
-
-    if self.seconds <= 0 {
-        self.next_timer();
-        self.notify();
-    }
-        
-    if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
-            self.seconds -= 1;
-            self.last_tick = Instant::now();
-        }
-
-
-
-    });
-    ctx.request_repaint();
-
+        });
+        ctx.request_repaint();
     }
 }
-
