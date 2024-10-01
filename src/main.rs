@@ -1,6 +1,7 @@
-use std::{io::self, io::Write, thread, time::Duration};
 use clap::Parser;
+use eframe::egui;
 use notify_rust::Notification;
+use std::{io, io::Write, thread, time::Duration, time::Instant};
 
 #[derive(Parser)]
 struct Args {
@@ -21,24 +22,75 @@ struct Args {
     sessions: u32,
 }
 
-fn main() {
+fn main() -> Result<(), eframe::Error> {
     let args = Args::parse();
-    for session in 1..=args.sessions {
-        println!("Session {}/{}: Time to work for {} minutes", session, args.sessions, args.work);
-        run_timer(args.work, "Work");
-    
-        if session == args.sessions {
-            println!("Time for a long break of {} minutes!", args.long_break);
-            run_timer(args.long_break, "Long Break");
-
-        } else {
-            println!("Time for a short break of {} minutes!", args.break_time);
-            run_timer(args.break_time, "Short Break");
-        }
-    }
-    println!("Pomodoro complete! Good job!");
 }
 
+// Application states
+struct PomodoroApp {
+    timing: Args,
+    session: str,
+    seconds: u32,
+    running: bool,
+    last_tick: Instant,
+    state_index: u32,
+}
+
+impl PomodoroApp {
+    fn new(self: _, args: Args) -> Self {
+        Self {
+            timing: args,
+            session: "Work",
+            seconds: args.work,
+            running: false,
+            last_tick: Instant::now(),
+            state_index: 0,
+        }
+    }
+
+    fn start_timer(&mut self) {
+        self.running = true;
+    }
+    fn stop_timer(&mut self) {
+        self.running = false;
+    }
+    fn next_timer(&mut self) {
+        // TODO maybe disable pause on next timer?
+        self.stop_timer();
+
+        self.state_index += 1;
+        if (self.state_index >= self.timing.sessions * 2) {
+            // All sessions finished
+            self.session = "Finished, Good Job!";
+            self.seconds = 0;
+        } else if (self.state_index % 2 == 1) {
+            // break
+            if (self.state_index + 1 == self.timing.sessions * 2) {
+                // Long break
+                self.session = "Long break";
+                self.seconds = self.timing.long_break * 60;
+            } else {
+                // Short break
+                self.session = "Short Break";
+                self.seconds = self.timing.break_time * 60;
+            }
+        } else {
+            // work time
+            self.session = "Work";
+            self.seconds = self.timing.work * 60;
+        }
+    }
+    fn notify(self) {
+        let _ = Notification::new()
+            .summary("Pomodoro: Timer Finished")
+            .body(&format!("{} finished!", self.session))
+            .icon("dialog-information")
+            .timeout(0)
+            .show();
+    }
+}
+
+/*
 fn run_timer(minutes: u64, label: &str) {
     let total_seconds = minutes * 60;
     for remaining_seconds in (0..=total_seconds - 1).rev() {
@@ -55,4 +107,6 @@ fn run_timer(minutes: u64, label: &str) {
     .icon("dialog-information")
     .timeout(0)
     .show();
+
 }
+*/
