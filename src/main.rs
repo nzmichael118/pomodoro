@@ -128,7 +128,7 @@ impl eframe::App for PomodoroApp {
                 self.last_tick = Instant::now();
             }
 
-            if self.seconds <= 0 {
+            if self.seconds <= 0 && self.session != "Finished, Good Job!"{
                 self.next_timer();
                 self.notify();
             }
