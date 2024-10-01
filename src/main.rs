@@ -124,7 +124,10 @@ impl eframe::App for PomodoroApp {
 
 
             if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
-                self.seconds -= 1;
+                if self.seconds != 0 {
+                    self.seconds -= 1;
+                }
+
                 self.last_tick = Instant::now();
             }
 
