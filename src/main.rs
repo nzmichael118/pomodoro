@@ -105,6 +105,8 @@ impl eframe::App for PomodoroApp {
             ui.heading(format!("Pomodoro {} Timer", self.session));
             ui.label(format!("Time remaining: {:02}:{:02}", self.seconds / 60, self.seconds % 60));
 
+
+        ui.horizontal(|ui| {
         if self.running { // Replace button with start or stop label
             if ui.button("Stop").clicked() {
                 self.stop_timer();
@@ -117,6 +119,7 @@ impl eframe::App for PomodoroApp {
         if ui.button("Skip Session").clicked() {
             self.next_timer();
         }
+    });
 
 
         if self.running && self.last_tick.elapsed() >= Duration::from_secs(1) {
