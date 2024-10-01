@@ -1,5 +1,5 @@
 # Pomodoro Timer
-A basic Gui Pomodoro timer written in rust
+A basic Gui Pomodoro timer written in rust <br>
 ![Image of application](https://github.com/user-attachments/assets/e246a30b-31c8-43a7-bc6d-6d331a317b30)
 
 
